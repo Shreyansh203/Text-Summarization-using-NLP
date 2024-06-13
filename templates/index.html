@@ -11,12 +11,9 @@
 </head>
 
 <body>
-
     <header style="background-color: #004A56;"
         class="fixed inset-0 w-full flex flex-col justify-center justify-items-center content-center h-20 rounded-b-lg">
-        <img src="/static/images/SynopserLogo.png" alt="Logo"
-            class="object-contain w-16 self-center md:self-left md:w-30">
-        <div class="self-center text-white">Data Summarization</div>
+        <div class="self-center text-white">Data Summarization Tool</div>
     </header>
 
     <section class="flex flex-wrap mt-20 w-full">
@@ -30,9 +27,9 @@
                     <input type="range" class="m-2" min="20" max="1000" name="maxL">
                 </div>
                 <div class="flex self-center">
-                    <button class="m-1 bg-green-500 hover:bg-blue-700 text-white font-semi-bold py-2 px-4 rounded-lg"
+                    <button class="m-1 bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg"
                         type="submit" onclick="Check()">Submit</button>
-                    <button class="m-1 bg-red-500 hover:bg-blue-700 text-white font-semi-bold py-2 px-4 rounded-lg"
+                    <button class="m-1 bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg"
                         type="reset">Clear</button>
                 </div>
             </form>
@@ -41,36 +38,75 @@
             <div class="mt-2 flex flex-col w-full md:h-screen">
                 <textarea style="background-color: #EDFFD2;"
                     class="w-11/12 border-green-600 rounded-lg p-2 border self-center justify-center md:h-3/4" rows="10"
-                    cols="30" name="result" readonly placeholder="Your Summary">{{result}}</textarea>
-                <button
-                    class="m-2 bg-blue-400 hover:bg-blue-700 text-white font-semi-bold py-2 px-4 rounded-lg self-center"
-                    onclick="myFunction()">Copy text</button>
+                    cols="30" id="result" readonly placeholder="Your Summary">{{result}}</textarea>
+
+                <div class="flex self-center">
+                    <button
+                        class="m-2 bg-blue-400 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg self-center"
+                        onclick="myFunction()">Copy text</button>
+                    <button
+                        class="m-2 bg-blue-400 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg self-center"
+                        onclick="speakSummary()">Speak Summary</button>
+                </div>
+
             </div>
         </div>
+        <div class="flex self-center">
+            <button class="m-1 bg-blue-400 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg self-center"
+                type="button" onclick="analyzeText()">Analyze Text</button>
+        </div>
+        <div id="analysisResult"
+            class="w-11/12 border-green-600 rounded-lg p-2 border self-center justify-center md:h-3/4">
+            <!-- Analysis results will be displayed here -->
+        </div>
     </section>
+
     <script>
+        function speakSummary() {
+            var textToSpeak = document.getElementById("result").value; // Replace with your summary textarea ID
+            var synth = window.speechSynthesis;
+            var utterance = new SpeechSynthesisUtterance(textToSpeak);
+            synth.speak(utterance);
+        }
         function myFunction() {
-            /* Get the text field */
-            var copyText = document.getElementById("myInput");
-
-            /* Select the text field */
+            var copyText = document.getElementById("result");
             copyText.select();
-            copyText.setSelectionRange(0, 99999); /* For mobile devices */
-
-            /* Copy the text inside the text field */
+            copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
         }
-    </script>
-    <script>
+
         function Check() {
-
             var reg = /<(.|\n)*>/g;
-
             if (reg.test(document.getElementById("data").value) == true) {
                 var ErrorText = 'Make Sure You Provide Valid Data.';
                 alert('Error Text');
-
             }
+        }
+
+        function analyzeText() {
+            const data = document.getElementById("data").value;
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: data }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("analysisResult").innerHTML = `<p>Error: ${data.error}</p>`;
+                    } else {
+                        document.getElementById("analysisResult").innerHTML = `
+                        <p>Word Count: ${data.word_count}</p>
+                        <p>Sentiment: ${data.sentiment}</p>
+                        <p>Keywords: ${data.keywords.join(', ')}</p>
+                    `;
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
         }
     </script>
 </body>
