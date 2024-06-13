@@ -1,1 +1,1 @@
-Text summarization tool using Hugging Face open source library
+Text summarization and text analyzer tool using Hugging Face open source library
